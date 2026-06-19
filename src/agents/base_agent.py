@@ -74,19 +74,26 @@ REMEMBER: Output ONLY JSON, no markdown code blocks, no extra text."""
                 "content": [],
             }
 
-            for block in response.content:
+            # Log raw response for debugging
+            self.logger.info(f"Response content blocks: {len(response.content)}")
+            for i, block in enumerate(response.content):
+                self.logger.info(f"Block {i}: type={getattr(block, 'type', 'unknown')}")
                 if hasattr(block, "type"):
                     if block.type == "text":
+                        text_content = block.text
+                        self.logger.info(f"Text content: {text_content[:200]}")
                         try:
-                            data = json.loads(block.text)
+                            data = json.loads(text_content)
                             result["content"].append(data)
                         except json.JSONDecodeError:
-                            result["content"].append({"text": block.text})
+                            result["content"].append({"text": text_content})
                     elif block.type == "tool_use":
+                        self.logger.info(f"Tool use: {block.name}")
                         result["content"].append(
                             {"tool_use": block.name, "input": block.input}
                         )
 
+            self.logger.info(f"Final result content: {result['content']}")
             return result
 
         except Exception as e:
