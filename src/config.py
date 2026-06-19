@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Anthropic/Claude Settings
     anthropic_api_key: Optional[str] = None
     anthropic_api_endpoint: Optional[str] = None
-    claude_model: str = "claude-sonnet-4-6"
+    claude_model: str = "global.anthropic.claude-opus-4-5-20251101-v1:0"
     max_tokens: int = 2048
 
     # MCP Server Settings
