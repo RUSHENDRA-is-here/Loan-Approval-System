@@ -42,8 +42,9 @@ class Settings(BaseSettings):
         from anthropic import Anthropic
 
         kwargs = {"api_key": self.anthropic_api_key}
-        if self.anthropic_api_endpoint:
-            kwargs["base_url"] = self.anthropic_api_endpoint
+        # Use default Anthropic API endpoint (don't override)
+        # if self.anthropic_api_endpoint:
+        #     kwargs["base_url"] = self.anthropic_api_endpoint
 
         return Anthropic(**kwargs)
 
