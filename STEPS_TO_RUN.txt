@@ -1,0 +1,350 @@
+================================================================================
+STEPS TO RUN THE MULTI-AGENT AGENTIC AI LOAN APPROVAL SYSTEM
+================================================================================
+
+SYSTEM OVERVIEW
+===============
+This is a production-grade Multi-Agent Agentic AI system for automated loan
+approval decisions. The system uses Claude Sonnet 4.6, LangChain orchestration,
+4 specialized agents, and 4 MCP servers.
+
+QUICK START (5 MINUTES)
+=======================
+
+1. Navigate to project directory:
+   cd /home/ubuntu/Loan_Approval_System
+
+2. Verify virtual environment exists:
+   ls -la .venv/bin/python
+
+3. Activate virtual environment:
+   source .venv/bin/activate
+
+4. Verify dependencies:
+   pip list | grep -E "langchain|fastapi|streamlit|anthropic"
+
+5. Check environment variable:
+   echo $ANTHROPIC_API_KEY
+
+6. Run tests to verify setup:
+   pytest tests/unit/test_mcp_servers.py::TestApplicantDBServer -v
+   (Should show 3 PASSED)
+
+
+OPTION A: RUN THE STREAMLIT UI (Recommended for Quick Demo)
+============================================================
+
+1. From project root, run:
+   streamlit run streamlit_app.py
+
+2. Open browser to:
+   http://localhost:8501
+
+3. You should see:
+   - Page title: "🏦 AI-Powered Loan Approval System"
+   - Navigation sidebar with 3 options
+   - Submit Application form
+
+4. To test, use "Demo Scenarios" page:
+   - Select "Strong Applicant (Likely Approved)"
+   - Click "Run Demo Scenario"
+   - Wait for processing (~2 seconds)
+   - See decision result with factors and reasoning
+
+5. Stop the app:
+   Press Ctrl+C in terminal
+
+
+OPTION B: RUN THE FASTAPI SERVER (For API Testing)
+===================================================
+
+1. From project root, run:
+   python -m uvicorn src.api.main:app --reload --port 8000
+
+2. You should see output like:
+   Uvicorn running on http://127.0.0.1:8000
+   Press CTRL+C to quit
+
+3. API is now available at:
+   - API Root: http://localhost:8000
+   - Swagger Docs: http://localhost:8000/docs
+   - ReDoc: http://localhost:8000/redoc
+
+4. Test with curl (from another terminal):
+   curl http://localhost:8000/api/v1/health
+
+5. Submit a loan application:
+   curl -X POST http://localhost:8000/api/v1/loans/submit \
+     -H "Content-Type: application/json" \
+     -d '{
+       "applicant_id": "APP_TEST_001",
+       "age": 35,
+       "income": 80000,
+       "employment_type": "employed",
+       "credit_score": 750,
+       "loan_amount": 250000,
+       "tenure_months": 60,
+       "existing_liabilities": 30000,
+       "location": "New York",
+       "employment_years": 5.5
+     }'
+
+6. Expected response (takes ~2 seconds):
+   {
+     "status": "success",
+     "application_id": "APP_TEST_001",
+     "decision": "APPROVED",
+     "case_id": "CASE-...",
+     "confidence": 0.85,
+     "message": "Application processed. Decision: APPROVED"
+   }
+
+7. Get decision details:
+   curl http://localhost:8000/api/v1/loans/APP_TEST_001
+
+8. Stop the server:
+   Press Ctrl+C in terminal
+
+
+OPTION C: RUN THE TEST SUITE (For Validation)
+==============================================
+
+1. From project root, run all tests:
+   pytest -v
+
+   Expected output:
+   - 18 unit tests should PASS
+   - 10+ E2E tests should PASS (may take longer due to LLM calls)
+
+2. Run only unit tests (faster, ~10 seconds):
+   pytest tests/unit/ -v
+
+   Expected: 18 passed
+
+3. Run specific test class:
+   pytest tests/unit/test_mcp_servers.py::TestRiskRulesServer -v
+
+   Expected: 5 passed
+
+4. Run E2E scenarios (slower, ~20-30 seconds each):
+   pytest tests/e2e/test_full_loan_workflow.py::TestLoanApprovalWorkflow::test_approved_loan_happy_path -v
+
+5. Run with coverage report:
+   pytest --cov=src --cov-report=term-missing
+
+
+FULL WORKFLOW: TEST → API → UI
+==============================
+
+1. Terminal 1 - Run tests first:
+   pytest tests/unit/ -v
+   (Verify all 18 tests pass)
+
+2. Terminal 2 - Start the API server:
+   python -m uvicorn src.api.main:app --reload --port 8000
+
+3. Terminal 3 - Test the API:
+   curl http://localhost:8000/api/v1/health
+
+4. Terminal 4 - Start Streamlit UI:
+   streamlit run streamlit_app.py
+
+5. Browser - Interact with UI:
+   - Go to http://localhost:8501
+   - Try demo scenarios
+   - Submit test applications
+   - View decisions
+
+6. API Testing - Test specific endpoints:
+   (See "OPTION B" section above for curl examples)
+
+
+LIVE MODIFICATION DEMO (For Evaluation)
+=======================================
+
+This shows the system's flexibility:
+
+1. Open src/constants.py:
+   nano src/constants.py
+
+2. Find this line:
+   CREDIT_SCORE_EXCELLENT = 750
+
+3. Change it to:
+   CREDIT_SCORE_EXCELLENT = 720
+
+4. Save file (Ctrl+O, Enter, Ctrl+X if using nano)
+
+5. Run tests to see impact:
+   pytest tests/unit/test_mcp_servers.py::TestRiskRulesServer::test_credit_risk_excellent -v
+
+6. Compare behavior before/after:
+   - Before: 750+ is excellent, risk = LOW
+   - After: 720+ is excellent, risk = LOW
+   - Now applicants with 720-749 get "excellent" rating
+
+7. Try other modifications:
+   - Change DTI_RATIO_EXCELLENT = 20 to 25
+   - Change MIN_CONFIDENCE_FOR_APPROVAL = 0.7 to 0.65
+   - Change RISK_SCORE_APPROVED = 40 to 50
+
+8. Revert changes:
+   git checkout src/constants.py
+
+
+DIRECTORY STRUCTURE
+===================
+
+Loan_Approval_System/
+├── src/                          # Source code
+│   ├── agents/                   # 4 specialized agents
+│   │   ├── base_agent.py
+│   │   ├── applicant_profile_agent.py
+│   │   ├── financial_risk_agent.py
+│   │   ├── decision_agent.py
+│   │   └── compliance_agent.py
+│   ├── mcp_servers/              # 4 MCP tool servers
+│   │   ├── applicant_db_server.py
+│   │   ├── risk_rules_server.py
+│   │   ├── decision_synthesis_server.py
+│   │   └── notification_server.py
+│   ├── orchestration/            # LangChain orchestrator
+│   │   └── orchestrator.py
+│   ├── api/                      # FastAPI endpoints
+│   │   ├── main.py
+│   │   └── routes/
+│   ├── models/                   # Pydantic data models
+│   ├── config.py                 # Configuration
+│   ├── constants.py              # Decision thresholds (MODIFY HERE)
+│   └── utils/                    # Logging & helpers
+├── tests/                        # Test suite
+│   ├── unit/                     # Unit tests (18)
+│   ├── e2e/                      # E2E tests (10+)
+│   └── fixtures/                 # Test data
+├── docs/
+│   └── Explanation.txt           # Complete documentation (1000+ lines)
+├── streamlit_app.py              # Streamlit UI (entry point)
+├── README.md                     # Quick start guide
+├── requirements.txt              # Python dependencies
+├── .env                          # Environment variables (ANTHROPIC_API_KEY)
+└── STEPS_TO_RUN.txt             # This file
+
+
+KEY FILES
+=========
+
+To understand the system:
+1. Read: docs/Explanation.txt (comprehensive guide)
+2. Read: README.md (quick reference)
+3. Check: src/agents/ (4 agent implementations)
+4. Check: src/mcp_servers/ (4 server implementations)
+5. Check: src/orchestration/orchestrator.py (main logic)
+6. Run: pytest tests/ (validation)
+
+
+TROUBLESHOOTING
+===============
+
+Issue: "ModuleNotFoundError: No module named 'anthropic'"
+Solution: pip install anthropic
+
+Issue: "ANTHROPIC_API_KEY not found"
+Solution: export ANTHROPIC_API_KEY=sk-...
+
+Issue: "Port 8000 already in use"
+Solution: python -m uvicorn src.api.main:app --reload --port 8001
+
+Issue: "Streamlit not found"
+Solution: pip install streamlit
+
+Issue: "Tests failing"
+Solution: Verify environment, run: pytest tests/unit/ -v
+
+Issue: "LLM calls very slow"
+Solution: This is normal - Claude API calls take ~1-2 seconds per agent
+
+
+EXPECTED OUTCOMES
+=================
+
+When running the Streamlit UI:
+✓ Submit an application with strong profile
+✓ Wait ~2 seconds for LLM processing
+✓ See APPROVED decision with 0.85+ confidence
+✓ See factors like "Good credit score", "Low DTI"
+✓ See reasoning explaining the decision
+
+When running the API:
+✓ Health check returns 200 OK
+✓ Submit application returns case_id
+✓ Get decision details returns full analysis
+✓ All responses include decision, confidence, risk_score
+
+When running tests:
+✓ 18 unit tests all pass
+✓ 10+ E2E scenarios all pass
+✓ Total coverage > 80%
+✓ No warnings or errors
+
+
+PERFORMANCE NOTES
+=================
+
+Processing time breakdown:
+- Input validation: <10ms
+- Profile agent (LLM): ~1-2 seconds
+- Risk agent (LLM): ~1-2 seconds
+- Decision agent (LLM): ~1-2 seconds
+- Compliance agent (LLM): ~0.5-1 second
+- Total: ~2-3 seconds per application (due to parallel agent execution)
+
+This is expected - LLM API calls dominate the latency.
+Not a performance issue; this is the bottleneck for all LLM-based systems.
+
+
+NEXT STEPS
+==========
+
+1. Quick Test (5 min):
+   - Activate venv
+   - Run: pytest tests/unit/ -v
+   - See 18 tests pass
+
+2. Try Streamlit (5 min):
+   - Run: streamlit run streamlit_app.py
+   - Submit demo scenario
+   - See decision output
+
+3. Try API (5 min):
+   - Run: python -m uvicorn src.api.main:app --reload
+   - Test with curl commands above
+
+4. Review Code (15 min):
+   - Read docs/Explanation.txt
+   - Skim src/orchestration/orchestrator.py
+   - Check src/agents/ implementations
+
+5. Live Modification (10 min):
+   - Edit src/constants.py
+   - Change thresholds
+   - Re-run tests to verify
+   - See system adapt to new rules
+
+
+SUPPORT
+=======
+
+For detailed documentation: Read docs/Explanation.txt
+For quick reference: Read README.md
+For code details: Check inline comments in src/ files
+For test details: Review tests/fixtures/loan_applications.py
+
+
+Questions? All answers are in:
+1. docs/Explanation.txt (comprehensive)
+2. README.md (quick)
+3. Inline code comments (specific)
+
+================================================================================
+END OF STEPS
+================================================================================
