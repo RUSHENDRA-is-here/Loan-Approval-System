@@ -11,7 +11,7 @@ class BaseAgent:
         self.role = role
         self.description = description
         self.client = settings.get_anthropic_client()
-        self.model = settings.claude_model
+        self.model = settings.claude_model or "claude-sonnet-4-6"
         self.max_tokens = settings.max_tokens
         self.logger = get_logger(f"agent.{name.lower()}")
 
