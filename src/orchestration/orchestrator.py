@@ -149,15 +149,56 @@ class LoanOrchestrator:
             return {
                 "error": agent_result.get("error"),
                 "analysis": "Agent execution failed",
+                "confidence": 0.0,
+                "risk_score": 50,
+                "factors": [],
+                "reasoning": "Agent execution failed",
             }
 
+        # Try to extract JSON from content
         for content in agent_result.get("content", []):
-            if isinstance(content, dict) and "analysis" in content:
-                return content
+            if isinstance(content, dict):
+                # Already parsed JSON
+                if "analysis" in content or "classification" in content:
+                    return content
+            elif isinstance(content, str):
+                # Try to parse string as JSON
+                try:
+                    parsed = json.loads(content)
+                    if isinstance(parsed, dict):
+                        return parsed
+                except json.JSONDecodeError:
+                    continue
+
+        # If no JSON found, try to parse raw text
+        raw_text = ""
+        for content in agent_result.get("content", []):
+            if isinstance(content, dict) and "text" in content:
+                raw_text = content["text"]
+            elif isinstance(content, str):
+                raw_text = content
+
+        # Try to extract JSON from raw text
+        if raw_text:
+            try:
+                # Look for JSON in the text
+                start_idx = raw_text.find("{")
+                end_idx = raw_text.rfind("}") + 1
+                if start_idx != -1 and end_idx > start_idx:
+                    json_str = raw_text[start_idx:end_idx]
+                    parsed = json.loads(json_str)
+                    if isinstance(parsed, dict):
+                        return parsed
+            except (json.JSONDecodeError, ValueError):
+                pass
 
         return {
             "analysis": "No structured analysis returned",
             "raw_content": agent_result.get("content", []),
+            "confidence": 0.5,
+            "risk_score": 50,
+            "factors": [],
+            "reasoning": "Unable to parse structured response",
         }
 
     def _extract_classification(self, analysis: Dict[str, Any]) -> DecisionClassification:

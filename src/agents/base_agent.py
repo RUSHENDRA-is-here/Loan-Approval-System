@@ -27,21 +27,24 @@ Role: {self.role}
 
 Description: {self.description}
 
-You are part of a multi-agent system analyzing loan applications. Your job is to:
+CRITICAL INSTRUCTIONS:
 1. Analyze the provided information carefully
 2. Apply business logic and rules
-3. Return structured, JSON-formatted responses
-4. Provide clear reasoning for your analysis
+3. Return ONLY valid JSON with no markdown or extra text
+4. Provide specific, clear reasoning
+5. Return numbers for numeric fields (not strings)
+6. Return arrays for list fields
+7. Use this exact JSON format:
 
-Always return your response as valid JSON with the following structure:
 {{
     "analysis": "Your detailed analysis",
-    "findings": {{"key": "value", ...}},
+    "findings": {{"key": "value"}},
     "risk_level": "LOW|MEDIUM|HIGH|CRITICAL",
-    "confidence": 0.0-1.0,
+    "confidence": 0.75,
     "reasoning": "Clear explanation of findings"
 }}
-"""
+
+REMEMBER: Output ONLY JSON, no markdown code blocks, no extra text."""
 
     async def execute_async(
         self, user_message: str, context: Optional[Dict] = None

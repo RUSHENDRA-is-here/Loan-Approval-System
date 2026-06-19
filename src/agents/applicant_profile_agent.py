@@ -40,22 +40,39 @@ class ApplicantProfileAgent(BaseAgent):
 
     def analyze(self, application_data: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze applicant profile."""
-        message = f"""Analyze the following loan application profile:
+        age = application_data.get('age', 0)
+        emp_years = application_data.get('employment_years', 0)
 
-Applicant ID: {application_data.get('applicant_id')}
-Age: {application_data.get('age')}
-Income: ${application_data.get('income'):,.2f}
-Employment Type: {application_data.get('employment_type')}
-Employment Years: {application_data.get('employment_years', 'Not specified')}
-Location: {application_data.get('location')}
+        message = f"""You are analyzing a loan applicant's profile. Return ONLY JSON.
 
-Provide analysis of:
-1. Income stability indicators
-2. Employment risk assessment
-3. Applicant completeness
-4. Credit history summary (if available)
+APPLICANT DATA:
+- Applicant ID: {application_data.get('applicant_id')}
+- Age: {age}
+- Annual Income: ${application_data.get('income'):,.2f}
+- Employment Type: {application_data.get('employment_type')}
+- Employment Years: {emp_years}
+- Location: {application_data.get('location')}
 
-Return as JSON with: analysis, findings, risk_level, confidence, reasoning
-"""
+PROFILE ASSESSMENT RULES:
+- Age 18-30: Young, may have less history (MEDIUM risk)
+- Age 30-65: Prime working years (LOW risk)
+- Age 65+: Near/past retirement (MEDIUM risk)
+- Employment < 1 year: Unstable (HIGH risk)
+- Employment 1-5 years: Developing (MEDIUM risk)
+- Employment 5+ years: Stable (LOW risk)
+
+Return this exact JSON format (ONLY JSON, no markdown):
+{{
+  "analysis": "Summary of profile assessment",
+  "findings": {{
+    "income_stability": "stable|developing|unstable",
+    "employment_risk": "LOW|MEDIUM|HIGH",
+    "age_category": "young|prime|senior",
+    "profile_score": 0.85
+  }},
+  "risk_level": "LOW|MEDIUM|HIGH|CRITICAL",
+  "confidence": 0.80,
+  "reasoning": "Explain age, employment, and income stability assessment"
+}}"""
 
         return self.execute(message, context=application_data)

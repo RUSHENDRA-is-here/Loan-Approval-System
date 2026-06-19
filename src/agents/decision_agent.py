@@ -34,34 +34,46 @@ class DecisionAgent(BaseAgent):
         risk_analysis: Dict[str, Any],
     ) -> Dict[str, Any]:
         """Make loan decision based on all analyses."""
-        message = f"""Make a final loan decision based on the following analyses:
+        credit_score = application_data.get('credit_score', 0)
+        income = application_data.get('income', 0)
+        loan_amount = application_data.get('loan_amount', 0)
+        dti = (application_data.get('existing_liabilities', 0) / (income / 12)) * 100 if income > 0 else 0
+
+        message = f"""You are a loan decision expert. Make a final loan decision based on this data:
 
 APPLICATION DATA:
 - Applicant ID: {application_data.get('applicant_id')}
-- Credit Score: {application_data.get('credit_score')}
-- Loan Amount: ${application_data.get('loan_amount'):,.2f}
-- Income: ${application_data.get('income'):,.2f}
+- Age: {application_data.get('age')}
+- Credit Score: {credit_score}
+- Annual Income: ${income:,.2f}
+- Loan Amount: ${loan_amount:,.2f}
+- Monthly DTI: {dti:.1f}%
+- Employment: {application_data.get('employment_type')}
 
-PROFILE ANALYSIS:
-{str(profile_analysis)}
+DECISION RULES:
+- Credit Score >= 750: Excellent (LOW risk)
+- Credit Score 700-749: Good (LOW risk)
+- Credit Score 650-699: Fair (MEDIUM risk)
+- Credit Score < 650: Poor (HIGH risk)
+- DTI < 30%: Good
+- DTI 30-43%: Fair
+- DTI > 43%: Poor
 
-FINANCIAL RISK ANALYSIS:
-{str(risk_analysis)}
+Make your decision using this exact JSON format (no markdown, just raw JSON):
+{{
+  "analysis": "Brief analysis of the application",
+  "classification": "APPROVED or REJECTED or MANUAL_REVIEW",
+  "confidence": 0.85,
+  "risk_score": 25,
+  "factors": [
+    "Factor 1 explaining decision",
+    "Factor 2 explaining decision",
+    "Factor 3 explaining decision"
+  ],
+  "reasoning": "Detailed reasoning for this specific decision. Explain credit score impact, DTI impact, and overall financial health."
+}}
 
-Based on these analyses, provide:
-1. Decision: APPROVED, REJECTED, or MANUAL_REVIEW
-2. Confidence score (0-1)
-3. Risk score (0-100)
-4. Key decision factors
-5. Clear reasoning
-
-Decision criteria:
-- APPROVED: Low risk, confidence > 0.7, favorable profile and financials
-- REJECTED: High risk, critical issues, confidence > 0.7 for rejection
-- MANUAL_REVIEW: Borderline cases, insufficient clarity, confidence between 0.4-0.7
-
-Return as JSON with: analysis, classification, confidence, risk_score, factors, reasoning
-"""
+CRITICAL: Return ONLY the JSON object, no other text."""
 
         context = {**application_data, "profile_analysis": profile_analysis, "risk_analysis": risk_analysis}
 
