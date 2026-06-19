@@ -1,0 +1,56 @@
+from enum import Enum
+
+# Decision Thresholds
+CREDIT_SCORE_EXCELLENT = 750
+CREDIT_SCORE_GOOD = 700
+CREDIT_SCORE_FAIR = 650
+CREDIT_SCORE_POOR = 600
+
+DTI_RATIO_EXCELLENT = 20
+DTI_RATIO_GOOD = 30
+DTI_RATIO_FAIR = 43
+DTI_RATIO_POOR = 50
+
+# Risk Scores
+MIN_CONFIDENCE_FOR_APPROVAL = 0.7
+MIN_CONFIDENCE_FOR_REJECTION = 0.7
+MANUAL_REVIEW_CONFIDENCE_RANGE = (0.4, 0.7)
+
+# Age Thresholds
+MIN_EMPLOYMENT_YEARS = 1
+YOUNG_AGE_THRESHOLD = 25
+SENIOR_AGE_THRESHOLD = 65
+
+# Loan Amount Thresholds
+MAX_LOAN_AMOUNT_FACTOR = 5  # Max loan = income * 5
+MAX_LOAN_TENURE_MONTHS = 360
+
+# Risk Score Ranges
+RISK_SCORE_APPROVED = 40
+RISK_SCORE_REJECTED = 70
+RISK_SCORE_MANUAL_REVIEW_LOW = 40
+RISK_SCORE_MANUAL_REVIEW_HIGH = 70
+
+# Factor Weights (for decision synthesis)
+WEIGHT_CREDIT_SCORE = 0.35
+WEIGHT_DTI_RATIO = 0.30
+WEIGHT_INCOME_STABILITY = 0.20
+WEIGHT_EMPLOYMENT = 0.15
+
+
+class RiskLevel(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class DecisionRule(str, Enum):
+    CREDIT_SCORE_TOO_LOW = "credit_score_too_low"
+    DTI_RATIO_TOO_HIGH = "dti_ratio_too_high"
+    INCOME_TOO_LOW = "income_too_low"
+    LOAN_TOO_HIGH = "loan_too_high"
+    EMPLOYMENT_UNSTABLE = "employment_unstable"
+    AGE_CONCERN = "age_concern"
+    MANUAL_REVIEW_REQUIRED = "manual_review_required"
+    APPROVED = "approved"
